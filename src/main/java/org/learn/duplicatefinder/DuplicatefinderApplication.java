@@ -33,5 +33,7 @@ public class DuplicatefinderApplication implements CommandLineRunner {
 		}
 
 		logger.info("Final Size: " + filesCollection.size());
+
+		baseFileOperations.getDirectoriesToCrawl();
 	}
 }
