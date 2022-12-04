@@ -3,23 +3,31 @@ package org.learn.duplicatefinder.filesop;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.RegexFileFilter;
+import org.learn.duplicatefinder.dao.FileMetaRepository;
+import org.learn.duplicatefinder.sqlite.FileMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.DigestUtils;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 
 @Component
 public class BaseFileOperations {
     private static Logger logger = LoggerFactory.getLogger(BaseFileOperations.class);
-    public Collection getAllFilesFromDirectory(String path) {
-        Collection files = FileUtils.listFiles(
+
+    @Autowired
+    private FileMetaRepository fileMetaRepository;
+    public Collection<File> getAllFilesFromDirectory(String path) {
+        Collection<File> files = FileUtils.listFiles(
                 new File(path),
                 new RegexFileFilter("^(.*?)"),
                 DirectoryFileFilter.DIRECTORY
@@ -45,7 +53,37 @@ public class BaseFileOperations {
                 directoryList.add(line.trim());
             }
         }
-        logger.info(MessageFormat.format("Locations to monitor: {0}", directoryList));
+        logger.info(MessageFormat.format(" >> Locations to monitor: {0}", directoryList));
         return directoryList;
+    }
+
+    public void populateFileData() throws IOException {
+        ArrayList<FileMeta> fileMetas = new ArrayList<>();
+
+        logger.info(" > Getting directories to crawl!");
+        ArrayList<String> directoriesToCrawl = getDirectoriesToCrawl();
+
+        logger.info(" > Starting crawling! ");
+        for (String dir : directoriesToCrawl) {
+            Collection<File> allFilesFromDirectory = getAllFilesFromDirectory(dir);
+            Iterator<File> iterator = allFilesFromDirectory.iterator();
+
+            while (iterator.hasNext()) {
+                File nextFile = iterator.next();
+                BasicFileAttributes nextFileAttribute = Files.readAttributes(nextFile.toPath(), BasicFileAttributes.class);
+                FileMeta currentFileData = new FileMeta(nextFile.getName(),
+                        nextFile.getAbsolutePath(),
+                        nextFileAttribute.size(),
+                        nextFileAttribute.creationTime().toMillis(),
+                        nextFileAttribute.lastModifiedTime().toMillis(),
+                        getMd5Hash(nextFile));
+
+                fileMetas.add(currentFileData);
+            }
+            logger.info(" > List created for: {0}", dir);
+        }
+
+        logger.info("> Triggering file save!");
+        fileMetaRepository.saveAll(fileMetas);
     }
 }

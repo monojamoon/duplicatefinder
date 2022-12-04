@@ -77,4 +77,16 @@ public class FileMeta {
                 ", md5='" + md5 + '\'' +
                 '}';
     }
+
+    public FileMeta() {
+    }
+
+    public FileMeta(String fileName, String absolutePath, long size, long createDate, long modifiedDate, String md5) {
+        this.fileName = fileName;
+        this.absolutePath = absolutePath;
+        this.size = size;
+        this.createDate = createDate;
+        this.modifiedDate = modifiedDate;
+        this.md5 = md5;
+    }
 }

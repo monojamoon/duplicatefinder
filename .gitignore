@@ -34,3 +34,4 @@ build/
 
 ### SQLite DB File ###
 sqlitesample.db
+/sqlitesample.db
