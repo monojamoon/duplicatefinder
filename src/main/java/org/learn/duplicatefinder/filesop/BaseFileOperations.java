@@ -14,6 +14,7 @@ import org.springframework.util.DigestUtils;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -85,5 +86,23 @@ public class BaseFileOperations {
 
         logger.info("> Triggering file save!");
         fileMetaRepository.saveAll(fileMetas);
+    }
+
+    public void appendListToFile(ArrayList<FileMeta> fileMetas) {
+        for (FileMeta fileMeta : fileMetas) {
+            try {
+                Files.write(Paths.get("allFileRecords.csv"),
+                        MessageFormat.format("\"{0}\", \"{1}\", \"{2}\", \"{3}\", \"{4}\", \"{5}\"", fileMeta.getFileName(),
+                                fileMeta.getCreateDate(),
+                                fileMeta.getModifiedDate(),
+                                fileMeta.getSize(),
+                                fileMeta.getAbsolutePath(),
+                                fileMeta.getMd5()).getBytes(),
+                        StandardOpenOption.APPEND);
+            }catch (IOException e) {
+                logger.error(e.getMessage(), e);
+            }
+        }
+
     }
 }

@@ -10,13 +10,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
 
 @SpringBootApplication
 public class DuplicatefinderApplication implements CommandLineRunner {
@@ -35,5 +29,30 @@ public class DuplicatefinderApplication implements CommandLineRunner {
 	@Override
 	public void run(String... args) throws Exception {
 		baseFileOperations.populateFileData();
+//		HashMap<String, ArrayList<FileMeta>> dbContentsInMap = getDbContentsInMap();
+
+
+	}
+
+	private HashMap<String, ArrayList<FileMeta>> getDbContentsInMap() {
+		HashMap<String, ArrayList<FileMeta>> dbBaseContainer = new HashMap<>();
+		Iterable<FileMeta> dbData = fileMetaRepository.findAll();
+
+		Iterator<FileMeta> iterator = dbData.iterator();
+
+		while (iterator.hasNext()) {
+			FileMeta next = iterator.next();
+
+			if (dbBaseContainer.containsKey(next.getMd5())) {
+				ArrayList<FileMeta> fileMetas = dbBaseContainer.get(next.getMd5());
+				fileMetas.add(next);
+			} else {
+				ArrayList<FileMeta> fileList = new ArrayList<>();
+				fileList.add(next);
+				dbBaseContainer.put(next.getMd5(), fileList);
+			}
+		}
+
+		return dbBaseContainer;
 	}
 }
